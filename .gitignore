@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+.DS_Store
+*.log
+.idea
+.vscode
+tmp
+.terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+*.tfplan

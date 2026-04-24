@@ -1,0 +1,24 @@
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+
+# Build and push this image after bootstrapping Artifact Registry.
+container_image = "us-central1-docker.pkg.dev/your-gcp-project-id/saas-starter-api-staging/api:latest"
+
+# Keep false while validating. Set true only when ready for recruiter demo.
+allow_unauthenticated = false
+invoker_members       = ["user:your-email@example.com"]
+
+# After first apply, set this to the Terraform output `service_url` if you do not use a custom domain.
+app_base_url = "https://replace-with-cloud-run-url-after-first-apply"
+
+platform_admin_email    = "your-email@example.com"
+platform_admin_password = "replace-with-a-strong-demo-password"
+
+jwt_access_secret = "replace-with-at-least-32-random-characters"
+
+# Stripe test-mode values. Keep placeholders until you wire the Stripe demo.
+stripe_secret_key     = "sk_test_replace_me"
+stripe_webhook_secret = "whsec_replace_me"
+stripe_price_pro      = "price_replace_me"
+stripe_price_team     = "price_replace_me"
+

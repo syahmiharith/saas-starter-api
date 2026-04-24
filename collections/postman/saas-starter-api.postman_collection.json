@@ -1,0 +1,537 @@
+{
+  "info": {
+    "name": "SaaS Starter API",
+    "description": "Recruiter demo collection for the multi-tenant SaaS starter API. Run requests in order for the golden path.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://saas-starter-api-staging-6xiqyp324q-uc.a.run.app"
+    },
+    {
+      "key": "ownerEmail",
+      "value": "demo-owner-{{$timestamp}}@example.com"
+    },
+    {
+      "key": "memberEmail",
+      "value": "demo-member-{{$timestamp}}@example.com"
+    },
+    {
+      "key": "password",
+      "value": "Password123!"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "memberAccessToken",
+      "value": ""
+    },
+    {
+      "key": "adminAccessToken",
+      "value": ""
+    },
+    {
+      "key": "organizationId",
+      "value": ""
+    },
+    {
+      "key": "apiKeyId",
+      "value": ""
+    },
+    {
+      "key": "apiKeySecret",
+      "value": ""
+    },
+    {
+      "key": "invitationToken",
+      "value": ""
+    },
+    {
+      "key": "memberId",
+      "value": ""
+    },
+    {
+      "key": "adminEmail",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/health"
+      }
+    },
+    {
+      "name": "Register Owner",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('accessToken', json.accessToken);",
+              "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+              "pm.collectionVariables.set('organizationId', json.defaultOrganization.id);",
+              "pm.test('registered owner', () => pm.expect(json.defaultOrganization.id).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Demo Owner\",\n  \"organizationName\": \"Demo Workspace\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/register"
+      }
+    },
+    {
+      "name": "Login Owner",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('accessToken', json.accessToken);",
+              "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+              "pm.test('owner login returned token', () => pm.expect(json.accessToken).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/login"
+      }
+    },
+    {
+      "name": "Refresh Token Rotation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('accessToken', json.accessToken);",
+              "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+              "pm.test('refresh rotated', () => pm.expect(json.refreshToken).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/refresh"
+      }
+    },
+    {
+      "name": "Create Organization",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('organizationId', json.id);",
+              "pm.test('created organization', () => pm.expect(json.id).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Recruiter Demo Org {{$timestamp}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/organizations"
+      }
+    },
+    {
+      "name": "List Members",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const members = pm.response.json();",
+              "const owner = members.find((member) => member.role.slug === 'owner');",
+              "pm.collectionVariables.set('memberId', owner && owner.id);",
+              "pm.test('owner membership exists', () => pm.expect(owner.id).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/members"
+      }
+    },
+    {
+      "name": "Create API Key",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('apiKeyId', json.id);",
+              "pm.collectionVariables.set('apiKeySecret', json.secret);",
+              "pm.test('secret shown once', () => pm.expect(json.secret).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Recruiter Demo Key\",\n  \"scopes\": [\"usage:read\", \"usage:write\", \"organization:read\"]\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/api-keys"
+      }
+    },
+    {
+      "name": "Track API Usage",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKeySecret}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"feature\": \"api_request\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/usage/events"
+      }
+    },
+    {
+      "name": "View Usage",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/usage"
+      }
+    },
+    {
+      "name": "Create Stripe Checkout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('checkout URL exists', () => pm.expect(json.url).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"plan\": \"pro\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/billing/checkout"
+      }
+    },
+    {
+      "name": "Create Invitation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('invitationToken', json.token);",
+              "pm.test('invitation token exists', () => pm.expect(json.token).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"role\": \"member\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/invitations"
+      }
+    },
+    {
+      "name": "Register Invited User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Demo Member\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/register"
+      }
+    },
+    {
+      "name": "Login Invited User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('memberAccessToken', json.accessToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/login"
+      }
+    },
+    {
+      "name": "Accept Invitation",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{invitationToken}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/invitations/accept"
+      }
+    },
+    {
+      "name": "Audit Logs",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/organizations/{{organizationId}}/audit-logs"
+      }
+    },
+    {
+      "name": "Login Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('adminAccessToken', json.accessToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/login"
+      }
+    },
+    {
+      "name": "Admin Metrics",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/admin/metrics"
+      }
+    }
+  ]
+}
