@@ -1,4 +1,9 @@
-import { createHash, randomBytes, randomUUID } from 'crypto';
+import { pbkdf2Sync, randomBytes, randomUUID } from 'crypto';
+
+const SECRET_HASH_SALT = process.env.SECRET_HASH_SALT ?? 'api-key-hash-salt-v1';
+const SECRET_HASH_ITERATIONS = 210000;
+const SECRET_HASH_KEYLEN = 32;
+const SECRET_HASH_DIGEST = 'sha512';
 
 export function createOpaqueToken(bytes = 32): string {
   return randomBytes(bytes).toString('base64url');
@@ -9,7 +14,13 @@ export function createJti(): string {
 }
 
 export function hashSecret(secret: string): string {
-  return createHash('sha256').update(secret).digest('hex');
+  return pbkdf2Sync(
+    secret,
+    SECRET_HASH_SALT,
+    SECRET_HASH_ITERATIONS,
+    SECRET_HASH_KEYLEN,
+    SECRET_HASH_DIGEST
+  ).toString('hex');
 }
 
 export function createApiKeySecret() {
